@@ -5,4 +5,4 @@ Things added / altered
 - Activity Log
 - Display Page number
 
-Other than above, the rest of the features are originally by NashHigh's Zine Arranger
+Other than above, the rest of the features are originally by NashHigh's Zine Arranger (https://nashhigh.itch.io/zinearranger)

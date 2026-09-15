@@ -554,7 +554,10 @@
         } else {
             specsString = specsString + "t";
         }
-        document.getElementById("folding-ins").innerHTML = "<a href=\"folding.html?" + specsString + "\">Folding Instructions</a>";
+        var foldingInsEl = document.getElementById("folding-ins");
+        if(foldingInsEl) {
+            foldingInsEl.innerHTML = "<a href=\"folding.html?" + specsString + "\">Folding Instructions</a>";
+        }
         
         pgmult = 0
         
@@ -694,7 +697,10 @@
                 break;
         }
         
-        document.getElementById("lbl-pc-mult").innerHTML = "To avoid blank pages at the end, the page count should be a multiple of " + pgmult + ".";
+        var lblPcMultEl = document.getElementById("lbl-pc-mult");
+        if(lblPcMultEl) {
+            lblPcMultEl.innerHTML = "To avoid blank pages at the end, the page count should be a multiple of " + pgmult + ".";
+        }
         document.getElementById("sig-size-label").innerHTML = "Sheets per signature (" + (pgmult * sigSize) + " zine pages/signature)";
         
         // update aspect ratio labels & poll aspect ratio values

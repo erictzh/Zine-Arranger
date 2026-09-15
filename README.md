@@ -1,7 +1,8 @@
 ## Things added / altered
 - Dark mode UI
 - Add Blank Page feature
-- Reverse Imposed PDF to normal page order pdf
+- Filter Page by Range
+- Reverse Imposed PDF to normal page order PDF
 - Activity Log
 - Display Page number
 

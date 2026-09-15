@@ -1,4 +1,4 @@
-Things added / altered
+##Things added / altered
 - Dark mode UI
 - Add Blank Page feature
 - Reverse Imposed PDF to normal page order pdf

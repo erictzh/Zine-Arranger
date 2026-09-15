@@ -43,6 +43,14 @@
     --font-std: 0.75em;
 }
 
+xsmall {
+    font-size: x-small;
+}
+
+div#preview-footer {
+    background-color: #000000d9;
+}
+
 p,label {
     font-size: var(--font-std);
     line-height: 1rem;
@@ -1558,7 +1566,7 @@ button.btn-solid:hover {
                         </label>
                         <div class="toggle-row-text">
                             <p>Reverse Impose</p>
-                            <small><i>Split an already-imposed A4 booklet PDF back down the middle and reassemble it into sequential reading order (1, 2, 3…N). Turns off the normal imposition controls below while active, since they don't apply to de-imposing.</i></small>
+                            <xsmall><i>Revert an already-imposed A4 booklet PDF back to normal page order.</i></xsmall>
                         </div>
                     </div>
                 </section>
@@ -1647,23 +1655,21 @@ button.btn-solid:hover {
                 </section>
                 <section id="opt-ratio" class="panel-card">
                     <p>Paper Size</p>
-                    <input type="number" class="num-input" id="rt-width" min="0.25" max="1100" value="210" onchange="refreshSpecs()"></input>
-                    <label id="rt-width-label" for="rt-width">Width</label><br>
-                    <input type="number" class="num-input" id="rt-height" min="0.25" max="1100" value="297" onchange="refreshSpecs()"></input>
-                    <label id="rt-height-label" for="rt-height">Height</label><br><input type="radio" id="page-inches" name="page-unit" onchange="refreshSpecs()"></input>
-                    <label for="page-inches">Inches</label><br>
-                    <input type="radio" id="page-mm" name="page-unit" checked="true" onchange="refreshSpecs()"></input>
-                    <label for="page-mm">Millimeters</label>
-                </section>
-                <section id="opt-page-presets" class="panel-card">
                     <div style="display:flex;flex-direction:columns">
+                        <p> Choose From : </p>
+                        <button id="page-a4" onclick="setPageA4()">A4</button><br>
+                        <button id="page-a3" onclick="setPageA3()">A3</button><br>
                         <button id="page-us-letter" onclick="setPageUSLetter()">US Letter</button><br>
                         <button id="page-11-17" onclick="setPage11_17()">11"x17"</button><br>
                     </div>
-                    <div style="display:flex;flex-direction:columns">
-                        <button id="page-a4" onclick="setPageA4()">A4</button><br>
-                        <button id="page-a3" onclick="setPageA3()">A3</button><br>
-                    </div>
+                    <input type="number" class="num-input" id="rt-width" min="0.25" max="1100" value="210" onchange="refreshSpecs()"></input>
+                    <label id="rt-width-label" for="rt-width">Width</label><br>
+                    <input type="number" class="num-input" id="rt-height" min="0.25" max="1100" value="297" onchange="refreshSpecs()"></input>
+                    <label id="rt-height-label" for="rt-height">Height</label><br><br>
+                    <input type="radio" id="page-inches" name="page-unit" onchange="refreshSpecs()"></input>
+                    <label for="page-inches">Inches</label><br>
+                    <input type="radio" id="page-mm" name="page-unit" checked="true" onchange="refreshSpecs()"></input>
+                    <label for="page-mm">Millimeters</label>
                 </section>
             </div>
 

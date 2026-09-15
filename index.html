@@ -20,7 +20,7 @@
 
     /* On-screen UI theme only — never applied to the zine/print output above, which must stay print-accurate.
        These --ui-* tokens are copied verbatim from MD2eBook's styles.css :root block. */
-    --ui-bg: rgb(36 29 27 / var(--tw-bg-opacity, 1));
+    --ui-bg: #171312;
     --ui-bg-alt: #241d1b;
     --ui-bg-card: #2b2220;
     --ui-bg-terminal: #100d0c;
@@ -889,6 +889,152 @@ input {
         padding: 14px 16px;
     }
 
+    /* ---- Smooth hide/restore for cards that don't apply while Reverse
+       Impose is active (e.g. Zine Size, and everything in Advanced) —
+       collapses height/opacity/margin together rather than an instant
+       display:none, per the "smoothly transition away" / "smoothly
+       restore" requirement. aria-hidden (set alongside the class in JS)
+       also keeps these out of the tab order while collapsed. ---- */
+    .panel-card.ri-hidden {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+        border-width: 0;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    #tab-content-basic, #tab-content-advanced {
+        transition: gap 0.2s ease;
+    }
+
+    #tab-content-basic.ri-tight, #tab-content-advanced.ri-tight {
+        gap: 0;   /* avoid stray flex-gap space next to fully-collapsed (0-height) cards above */
+    }
+
+    .panel-card:not(.ri-hidden) {
+        transition: opacity 0.2s ease, max-height 0.25s ease, padding 0.2s ease, margin 0.2s ease, border-width 0.2s ease;
+        max-height: 600px;   /* generous cap — just needs to be bigger than any real card so the transition has somewhere to animate from */
+    }
+
+    /* the tab itself, disabled (not just visually) while its content doesn't apply */
+    .tab[disabled] {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    /* ---- Reverse Impose toggle switch — track/thumb use the same neutral
+       card/border tokens as everything else at rest, and the app's accent
+       color once switched on, per the theme-integration requirement. ---- */
+    .toggle-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .toggle-row-text p {
+        margin: 0 0 2px 0;
+    }
+
+    .toggle-switch {
+        position: relative;
+        flex: 0 0 auto;
+        display: inline-block;
+        width: 40px;
+        height: 22px;
+        margin-top: 2px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        inset: 0;
+        background-color: var(--ui-bg);
+        border: 1px solid var(--ui-border);
+        border-radius: 9999px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .toggle-slider::before {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        left: 2px;
+        top: 2px;
+        border-radius: 50%;
+        background-color: var(--ui-fg-muted);
+        transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--ui-accent);
+        border-color: var(--ui-accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+        transform: translateX(18px);
+        background-color: #fff;
+    }
+
+    .toggle-switch input:focus-visible + .toggle-slider {
+        outline: 2px solid var(--ui-accent-text);
+        outline-offset: 2px;
+    }
+
+    /* ---- Reverse Impose sequential-page preview grid — a simple wrapped
+       grid of full pages in reading order (1..N), as opposed to .zine's
+       folded/imposed sheet layout, since de-imposing produces an ordinary
+       sequential document rather than something meant to be folded. ---- */
+    .reverse-impose-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        justify-content: flex-start;
+        width: max-content;
+        max-width: 100%;
+    }
+
+    .reverse-impose-page {
+        position: relative;
+        width: 260px;   /* fixed on-screen thumbnail width; aspect-ratio (set inline per element in JS from the real page dimensions) keeps proportions correct. Print sizing is separate — see --ri-print-width/height below. */
+        background-color: var(--ui-bg-card);
+        outline: 4px solid black;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .reverse-impose-page canvas {
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .reverse-impose-page .ri-page-label {
+        position: absolute;
+        bottom: 4px;
+        right: 6px;
+        font-size: 11px;
+        font-family: var(--ui-mono);
+        color: var(--ui-fg-muted);
+        background-color: rgba(0,0,0,0.55);
+        padding: 1px 6px;
+        border-radius: 4px;
+    }
+
     .log-card.panel-card {
         padding: 0;
         overflow: hidden;
@@ -1035,6 +1181,33 @@ input {
         break-after: always;
         break-inside: avoid;
         /*border: 4px dashed black;*/
+    }
+
+    /* Reverse Impose's de-imposed pages print one-per-sheet, at their real
+       physical size (set inline per element in JS, since it's derived from
+       the actual source PDF page dimensions rather than a fixed constant
+       like --sheet-print-width/height above). */
+    .reverse-impose-grid {
+        display: block !important;   /* the flex-wrap grid is a screen-only convenience; each page break_after's onto its own printed sheet regardless */
+        width: auto !important;
+    }
+
+    .reverse-impose-page {
+        width: var(--ri-print-width) !important;
+        height: var(--ri-print-height) !important;
+        aspect-ratio: auto !important;
+        break-after: always;
+        break-inside: avoid;
+        background-color: #fff !important;
+        outline: none !important;
+    }
+
+    /* Without this, Chromium's print-to-PDF engine was emitting one extra
+       trailing blank page — a forced break-after on the very last page has
+       nothing after it to break onto, but the browser generated an empty
+       page for it anyway. Same values apply to .zine-sheet:last-child. */
+    .reverse-impose-page:last-child, .zine-sheet:last-child {
+        break-after: auto;
     }
 
     /* Safety net: the dark card color above is screen-only styling. Force plain white
@@ -1377,6 +1550,18 @@ button.btn-solid:hover {
                 <span id="folding-ins"></span>
             </div>
             <div id="tab-content-basic">
+                <section id="opt-reverse-impose" class="panel-card">
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="reverse-impose-toggle" onchange="toggleReverseImpose()"></input>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <div class="toggle-row-text">
+                            <p>Reverse Impose</p>
+                            <small><i>Split an already-imposed A4 booklet PDF back down the middle and reassemble it into sequential reading order (1, 2, 3…N). Turns off the normal imposition controls below while active, since they don't apply to de-imposing.</i></small>
+                        </div>
+                    </div>
+                </section>
                 <section id="opt-zinesize" class="panel-card">
                     <p>Zine Size</p>
                     <input type="radio" id="zs-half" name="zsize" checked="true" onchange="selectHalfSize()"></input>
@@ -1403,6 +1588,11 @@ button.btn-solid:hover {
                         <label for="zs-sxfr">1/64th Size</label><br>
                     </div>
                     <button id="extra-sizes-button" onclick="toggleMoreSizes()">More Sizes</button>
+                </section>
+                <section id="opt-page-range" class="panel-card">
+                    <p>Select Pages:</p>
+                    <input type="text" class="num-input" id="page-range" placeholder="e.g. 1-3, 7" onchange="refreshSpecs()"></input>
+                    <small><i><label id="page-range-label" for="page-range"><br>&nbsp; &nbsp; PDF page numbers to include (comma-separated, ranges with a dash — e.g. "1-3,7" includes pages 1, 2, 3, 7). Leave blank to include every page.</label></i></small>
                 </section>
                 <section id="opt-blank-pages" class="panel-card">
                     <p>Insert Blank Pages:</p>
@@ -1498,6 +1688,7 @@ button.btn-solid:hover {
                 <div class="md2ebook-canvas-wrapper" id="canvas-wrapper">
                     <p class="preview-empty noprint" id="preview-empty">Choose a PDF above to see the zine preview here.</p>
                     <section class="zine md2ebook-canvas-scale-box" id="zine" style="display:none"><div id="zine-scale" class="zine-scale md2ebook-page-shadow"></div></section>
+                    <section class="reverse-impose-grid" id="reverse-impose-grid" style="display:none"></section>
                 </div>
                 <div class="workspace-preview-footer noprint md2ebook-no-print md2ebook-preview-statusbar" id="preview-footer">Select a PDF to begin</div>
             </div>
@@ -1534,6 +1725,7 @@ button.btn-solid:hover {
     var guideFolds = false; // whether to display guide lines along folds
     
     var blankAfterPages = []; // list of PDF page numbers (1-indexed) after which a manual blank zine page should be inserted; a page number listed twice inserts two blanks
+    var pageRangeSpec = ""; // raw "Select Pages" field value (e.g. "1-3,7") — parsed against the real page count once a PDF is loaded, see parsePageRange()
     
     // ---- Activity log (for transparency about what the app is doing in the background) ----
     // REPL-style: every action prints the actual function call being run (the "command"),
@@ -1850,6 +2042,13 @@ button.btn-solid:hover {
         if(blankAfterPages.length > 0) {
             logResult("Manual blank pages requested after PDF page(s): " + blankAfterPages.join(", ") + ".");
         }
+
+        // "Select Pages" — raw spec only; actual parsing happens in selectFile() once the
+        // real PDF page count is known (needed to resolve open-ended / out-of-range values)
+        pageRangeSpec = document.getElementById("page-range").value.trim();
+        if(pageRangeSpec.length > 0) {
+            logResult("Page range requested: \"" + pageRangeSpec + "\".");
+        }
         
         specsString = SIZE_CHARS[size];
         
@@ -2094,12 +2293,259 @@ button.btn-solid:hover {
         }, 100);
     });
     
+    // Parses a Chrome-print-dialog-style page range spec ("1-3,7") into a sorted,
+    // deduplicated array of valid PDF page numbers (1-indexed) within [1, maxPage].
+    // Ranges may be given in either order ("7-5" is treated the same as "5-7").
+    // Invalid/out-of-range tokens are silently skipped rather than failing the whole
+    // spec. An empty/whitespace-only spec, or one with no valid tokens at all,
+    // returns null — callers should treat that as "use every page".
+    function parsePageRange(spec, maxPage) {
+        if(!spec || spec.trim().length === 0) return null;
+        var pages = {};
+        var tokens = spec.split(",");
+        for(var t = 0; t < tokens.length; t++) {
+            var token = tokens[t].trim();
+            if(token.length === 0) continue;
+            var dashParts = token.split("-");
+            if(dashParts.length === 2 && dashParts[0].trim().length > 0 && dashParts[1].trim().length > 0) {
+                var a = parseInt(dashParts[0].trim(), 10);
+                var b = parseInt(dashParts[1].trim(), 10);
+                if(isNaN(a) || isNaN(b)) continue;
+                var lo = Math.min(a, b), hi = Math.max(a, b);
+                for(var pn = lo; pn <= hi; pn++) {
+                    if(pn >= 1 && pn <= maxPage) pages[pn] = true;
+                }
+            } else {
+                var single = parseInt(token, 10);
+                if(!isNaN(single) && single >= 1 && single <= maxPage) pages[single] = true;
+            }
+        }
+        var result = Object.keys(pages).map(Number).sort(function(a, b) { return a - b; });
+        return result.length > 0 ? result : null;
+    }
+
+    var isReverseImposeActive = false; // true once the "Reverse Impose" toggle is on
+
+    // Shows/hides the cards that don't apply while de-imposing (everything about
+    // HOW to impose a fresh zine — Zine Size, Select Pages, Insert Blank Pages, and
+    // the whole Advanced tab), and disables the Advanced tab itself. Then reprocesses
+    // whatever file is currently loaded (if any) under the new mode.
+    function toggleReverseImpose() {
+        isReverseImposeActive = document.getElementById("reverse-impose-toggle").checked;
+        logCmd("toggleReverseImpose()");
+
+        var cardsToHide = [
+            "opt-zinesize", "opt-page-range", "opt-blank-pages",
+            "opt-duplex", "opt-orient", "opt-spine", "opt-extras",
+            "opt-signatures", "opt-guides", "opt-ratio", "opt-page-presets"
+        ];
+        cardsToHide.forEach(function(id) {
+            var el = document.getElementById(id);
+            if(!el) return;
+            if(isReverseImposeActive) {
+                el.classList.add("ri-hidden");
+                el.setAttribute("aria-hidden", "true");
+            } else {
+                el.classList.remove("ri-hidden");
+                el.removeAttribute("aria-hidden");
+            }
+        });
+
+        var advTab = document.getElementById("tab-advanced");
+        if(isReverseImposeActive) {
+            if(advTab.classList.contains("active")) {
+                switchOptionsTab("basic"); // the Advanced tab is about to be disabled — back out of it first if it's open
+            }
+            advTab.setAttribute("disabled", "true");
+        } else {
+            advTab.removeAttribute("disabled");
+            setReverseImposePageSize(null, null); // clear the custom @page size override — normal zine printing uses the user's own paper-size selection instead
+        }
+
+        logResult(isReverseImposeActive
+            ? "Reverse Impose enabled — normal imposition controls hidden; the Advanced tab is disabled."
+            : "Reverse Impose disabled — normal imposition controls restored.");
+
+        selectFile(); // reprocess the current file (if any) under the new mode
+    }
+
+    // Renders one full PDF page at high resolution, then crops it into Left and
+    // Right half-canvases (W/2 x H each). Returns physical size in PDF points
+    // (1/72in) for each half too, so the caller can size the printed output
+    // to the real, correct physical dimensions rather than guessing.
+    async function splitPdfPageIntoHalves(page) {
+        var renderScale = 2;
+        var outputScale = 3; // extra canvas pixel density for print sharpness, same idea as the normal renderPage() path
+        var viewport = page.getViewport({ scale: renderScale });
+
+        var fullCanvas = document.createElement("canvas");
+        fullCanvas.width = Math.floor(viewport.width * outputScale);
+        fullCanvas.height = Math.floor(viewport.height * outputScale);
+        var fullCtx = fullCanvas.getContext("2d");
+        await page.render({
+            canvasContext: fullCtx,
+            transform: [outputScale, 0, 0, outputScale, 0, 0],
+            viewport: viewport
+        }).promise;
+
+        var halfWidthPx = Math.floor(fullCanvas.width / 2);
+        var heightPx = fullCanvas.height;
+
+        var leftCanvas = document.createElement("canvas");
+        leftCanvas.width = halfWidthPx;
+        leftCanvas.height = heightPx;
+        leftCanvas.getContext("2d").drawImage(fullCanvas, 0, 0, halfWidthPx, heightPx, 0, 0, halfWidthPx, heightPx);
+
+        var rightCanvas = document.createElement("canvas");
+        rightCanvas.width = fullCanvas.width - halfWidthPx;
+        rightCanvas.height = heightPx;
+        rightCanvas.getContext("2d").drawImage(fullCanvas, halfWidthPx, 0, rightCanvas.width, heightPx, 0, 0, rightCanvas.width, heightPx);
+
+        var widthPt = (viewport.width / renderScale) / 2;
+        var heightPt = viewport.height / renderScale;
+
+        return {
+            left: { canvas: leftCanvas, widthPt: widthPt, heightPt: heightPt },
+            right: { canvas: rightCanvas, widthPt: widthPt, heightPt: heightPt }
+        };
+    }
+
+    // The core Reverse Impose operation: takes an already-imposed source PDF
+    // (alternating front/back sheet sides — page 1=sheet-1-front, page 2=
+    // sheet-1-back, page 3=sheet-2-front, ... — the standard convention for a
+    // print-ready imposed booklet) and reconstructs it into ordinary sequential
+    // reading order by splitting every sheet side down the middle and remapping
+    // the four resulting halves per sheet using the reverse saddle-stitch formula:
+    //   Front Left  -> N - 2(k-1)      Front Right -> 2k - 1
+    //   Back Left   -> 2k              Back Right  -> N - (2k-1)
+    // where k is the sheet number (1-indexed) and N = totalSheets * 4.
+    // Returns a 1-indexed array (index 0 unused) of {canvas, widthPt, heightPt},
+    // or null (after showing a validation error) if the source can't be paired
+    // into whole sheets.
+    async function reverseImposePdf(pdf, actualPageCount) {
+        if(actualPageCount < 2 || actualPageCount % 2 !== 0) {
+            var msg = "Reverse Impose needs one front + one back page per sheet (an even page count). This PDF has " + actualPageCount + " page(s).";
+            logResult(msg, true);
+            setReverseImposePageSize(null, null); // clear any stale size from a previous successful run
+            alert(msg);
+            return null;
+        }
+
+        var totalSheets = actualPageCount / 2;
+        var N = totalSheets * 4;
+        logResult("Reverse Impose: " + totalSheets + " sheet(s) detected \u2192 " + N + " sequential page(s) (a multiple of 4).");
+
+        var resultPages = new Array(N + 1); // 1-indexed, [0] unused
+
+        for(var k = 1; k <= totalSheets; k++) {
+            var frontPageNum = 2 * k - 1;
+            var backPageNum = 2 * k;
+
+            logCmd("reverseImposePdf(): sheet " + k + "/" + totalSheets);
+
+            var frontPage = await pdf.getPage(frontPageNum);
+            var frontHalves = await splitPdfPageIntoHalves(frontPage);
+            var backPage = await pdf.getPage(backPageNum);
+            var backHalves = await splitPdfPageIntoHalves(backPage);
+
+            var frontLeftSeq = N - 2 * (k - 1);
+            var frontRightSeq = 2 * k - 1;
+            var backLeftSeq = 2 * k;
+            var backRightSeq = N - (2 * k - 1);
+
+            resultPages[frontLeftSeq] = frontHalves.left;
+            resultPages[frontRightSeq] = frontHalves.right;
+            resultPages[backLeftSeq] = backHalves.left;
+            resultPages[backRightSeq] = backHalves.right;
+
+            logResult("Front (src p." + frontPageNum + ") \u2192 seq " + frontLeftSeq + " (L), " + frontRightSeq + " (R). Back (src p." + backPageNum + ") \u2192 seq " + backLeftSeq + " (L), " + backRightSeq + " (R).");
+        }
+
+        return resultPages;
+    }
+
+    // Populates #reverse-impose-grid with the reconstructed sequential pages —
+    // a plain wrapped grid in reading order (unlike .zine's folded/imposed
+    // layout), since the whole point of this mode is that the result is an
+    // ordinary document again, not something meant to be folded.
+    // Sizing the .reverse-impose-page elements themselves (via --ri-print-width/
+    // height above) only controls how much of the PAPER the content fills — it
+    // does NOT change what paper size the browser actually prints onto. Without
+    // this, the printer kept using whatever page size was last selected (e.g. A4),
+    // so the correctly-sized half-page content just sat in the corner of a much
+    // bigger sheet. This injects an explicit @page size override matching the
+    // real reconstructed page dimensions, so each printed sheet IS that size —
+    // e.g. an A5-ish portrait sheet, filled edge to edge, not a corner of A4.
+    // Cleared (see toggleReverseImpose()) when Reverse Impose is off, since the
+    // normal zine flow relies on the user's own paper-size selection instead.
+    function setReverseImposePageSize(widthIn, heightIn) {
+        var styleEl = document.getElementById("ri-page-size-style");
+        if(!styleEl) {
+            styleEl = document.createElement("style");
+            styleEl.id = "ri-page-size-style";
+            document.head.appendChild(styleEl);
+        }
+        if(widthIn && heightIn) {
+            styleEl.textContent = "@media print { @page { size: " + widthIn.toFixed(3) + "in " + heightIn.toFixed(3) + "in; margin: 0; } }";
+            logResult("Print page size set to " + widthIn.toFixed(2) + "in \u00d7 " + heightIn.toFixed(2) + "in to match the de-imposed pages.");
+        } else {
+            styleEl.textContent = "";
+        }
+    }
+
+    function renderReverseImposeGrid(resultPages, N) {
+        var grid = document.getElementById("reverse-impose-grid");
+        grid.innerHTML = "";
+        var commonWidthIn = null, commonHeightIn = null; // for the @page size override below — see setReverseImposePageSize()
+        for(var i = 1; i <= N; i++) {
+            var entry = resultPages[i];
+            var pageDiv = document.createElement("div");
+            pageDiv.className = "reverse-impose-page";
+            if(entry) {
+                var widthIn = entry.widthPt / 72;
+                var heightIn = entry.heightPt / 72;
+                if(commonWidthIn === null) {
+                    commonWidthIn = widthIn;
+                    commonHeightIn = heightIn;
+                }
+                pageDiv.style.setProperty("--ri-print-width", widthIn + "in");
+                // A tiny (imperceptible, ~0.25mm) reduction here — not in the @page size
+                // itself, which stays exactly correct — so that per-element pixel rounding
+                // across many stacked full-page boxes can never accumulate into spilling
+                // onto a trailing blank extra page (this was happening: 8 pages x a
+                // fraction of a rounded-up px each summed to a few px too many).
+                pageDiv.style.setProperty("--ri-print-height", (heightIn - 0.05) + "in");
+                pageDiv.style.aspectRatio = entry.widthPt + " / " + entry.heightPt;
+                entry.canvas.style.width = "100%";
+                entry.canvas.style.height = "100%";
+                pageDiv.appendChild(entry.canvas);
+            }
+            var label = document.createElement("span");
+            label.className = "ri-page-label noprint";
+            label.textContent = "Page " + i + " / " + N;
+            pageDiv.appendChild(label);
+            grid.appendChild(pageDiv);
+        }
+        setReverseImposePageSize(commonWidthIn, commonHeightIn);
+        var footerEl = document.getElementById("preview-footer");
+        if(footerEl) {
+            footerEl.textContent = "Reverse Impose \u00b7 " + N + " sequential page(s) reconstructed";
+        }
+    }
+
     function selectFile() {
         logCmd("selectFile()");
         if(document.getElementById("selector").files.length > 0) {
             document.getElementById("zine-scale").innerHTML = ""; // clear out existing zine field to prevent weirdness hopefully
-            document.getElementById("zine").style.display = "block";
+            document.getElementById("reverse-impose-grid").innerHTML = "";
             document.getElementById("preview-empty").style.display = "none";
+            if(isReverseImposeActive) {
+                document.getElementById("zine").style.display = "none";
+                document.getElementById("reverse-impose-grid").style.display = "flex";
+            } else {
+                document.getElementById("zine").style.display = "block";
+                document.getElementById("reverse-impose-grid").style.display = "none";
+            }
             var fl = document.getElementById("selector").files[0];
             logResult("PDF selected: \"" + fl.name + "\" (" + Math.round(fl.size/1024) + " KB). Loading...");
             var nms = fl.name.split(".");
@@ -2117,27 +2563,49 @@ button.btn-solid:hover {
                 
                 var actualPageCount = pdf.numPages;
                 logResult("PDF loaded — " + actualPageCount + " page(s) detected.");
+
+                if(isReverseImposeActive) {
+                    logCmd("reverseImposePdf()");
+                    var resultPages = await reverseImposePdf(pdf, actualPageCount);
+                    if(resultPages) {
+                        renderReverseImposeGrid(resultPages, resultPages.length - 1);
+                        logResult("Done — de-imposed layout ready to print.");
+                    }
+                    return;
+                }
+
+                // "Select Pages" — resolve the raw spec against the real page count now
+                // that we know it. null/no valid tokens means "use every page".
+                var selectedPages = parsePageRange(pageRangeSpec, actualPageCount);
+                if(selectedPages) {
+                    logResult("Using " + selectedPages.length + " of " + actualPageCount + " page(s): " + selectedPages.join(", ") + ".");
+                } else {
+                    selectedPages = [];
+                    for(var sp = 1; sp <= actualPageCount; sp++) selectedPages.push(sp);
+                }
                 
                 // Build a mapping from PDF page number (1-indexed) to zine canvas slot (0-indexed),
                 // leaving a gap in the slot numbering everywhere the user asked for a manual blank page.
                 // A page number listed more than once in blankAfterPages leaves more than one gap.
+                // Only walks selectedPages, not every PDF page — an excluded page never gets a slot
+                // (and any "blank after N" rule for an excluded N simply has nothing to attach to).
                 var blankCounts = {};
                 blankAfterPages.forEach(function(p) {
                     blankCounts[p] = (blankCounts[p] || 0) + 1;
                 });
                 var pdfPageToSlot = new Array(actualPageCount + 1);
                 var slotCursor = 0;
-                for(var pn = 1; pn <= actualPageCount; pn++) {
+                selectedPages.forEach(function(pn) {
                     pdfPageToSlot[pn] = slotCursor;
                     slotCursor += 1 + (blankCounts[pn] || 0);
-                }
-                var contentPageCount = slotCursor; // actual pages + manually inserted blanks
+                });
+                var contentPageCount = slotCursor; // selected pages + manually inserted blanks
                 
                 // We'll do some special handling for double-sided zines when their page count is a multiple of 4 but not a multiple of the full sheet count.
                 // Single sided zines get blank pages at the end, which is easy, but for this situation, we want to put them directly in the middle
                 // That way the blank pages will all be at the bottom of the sheet/sheets & can be discarded after printing.
                 // (Skipped whenever manual blank pages are in use, since the user is already placing blanks by hand.)
-                var needsMidBump = (blankAfterPages.length == 0) && (doubleSided && actualPageCount%4 == 0 && actualPageCount % pgmult != 0); // whether we need to do special blank page handling
+                var needsMidBump = (blankAfterPages.length == 0) && (doubleSided && selectedPages.length%4 == 0 && selectedPages.length % pgmult != 0); // whether we need to do special blank page handling
                 var midBumper = 0; // if we need to insert blank pages into the middle, this will 'bump' the page count up by the blank page count part way through
                 pageCount = contentPageCount;
                 logCmd("arrangeZineSheets()");
@@ -2155,7 +2623,8 @@ button.btn-solid:hover {
                 //
                 // Fetch the first page
                 //
-                for(var i = 1; i<actualPageCount+1; i++) {
+                for(var selIdx = 0; selIdx < selectedPages.length; selIdx++) {
+                    var i = selectedPages[selIdx];
                     const page = await pdf.getPage(i);
                     var viewport = page.getViewport({ scale: 1 });
                     var scale;
@@ -2170,13 +2639,15 @@ button.btn-solid:hover {
                     
                     const outputScale = 3;
 
-                    // for double-sided zines with inserted blank pages
-                    if(needsMidBump && i == ((pageCount-blankPages)/2+1)) {
+                    // for double-sided zines with inserted blank pages — compares against
+                    // POSITION within selectedPages (1-indexed), not the raw PDF page number,
+                    // since a page range can skip numbers
+                    if(needsMidBump && (selIdx + 1) == ((pageCount-blankPages)/2+1)) {
                         midBumper = blankPages;
                     }
                     var slotIndex = pdfPageToSlot[i] + midBumper;
                     logCmd("renderPage(" + i + ")");
-                    logResult(i + "/" + actualPageCount + " → zine slot " + slotIndex + (size == SIZE_QUARTER && quarterCopy ? " (+ copy)" : "") + ".");
+                    logResult((selIdx + 1) + "/" + selectedPages.length + " (PDF page " + i + ") \u2192 zine slot " + slotIndex + (size == SIZE_QUARTER && quarterCopy ? " (+ copy)" : "") + ".");
                     //
                     // Prepare canvas using PDF page dimensions
                     //
